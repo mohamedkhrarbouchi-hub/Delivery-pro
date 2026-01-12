@@ -3,9 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Delivery Intelligence OS – ONLINE</title>
+<title>Delivery Intelligence OS</title>
 
-<!-- Manifest PWA -->
 <link rel="manifest" href="data:application/json,{
   &quot;name&quot;:&quot;Delivery OS&quot;,
   &quot;short_name&quot;:&quot;DeliveryOS&quot;,
@@ -18,11 +17,114 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
-body{font-family:system-ui;background:#0f172a;color:#f1f5f9;padding:15px}
-.card{background:#1e293b;padding:15px;border-radius:14px;margin-bottom:15px}
-input,select,button{width:100%;padding:12px;border-radius:10px;border:0;margin-top:8px}
-button{font-weight:bold;background:#2563eb;color:white}
-.small{font-size:.85rem;opacity:.8}
+    :root {
+        --bg: #0f172a;
+        --card: #1e293b;
+        --accent: #2563eb;
+        --danger: #ef4444;
+        --text: #f1f5f9;
+        --success: #10b981;
+    }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        margin: 0;
+        padding: 20px;
+    }
+
+    h3 { text-align: center; margin-bottom: 25px; font-size: 1.8rem; color: var(--accent); }
+
+    /* شبكة التصميم الأساسية */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .card {
+        background: var(--card);
+        padding: 20px;
+        border-radius: 16px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255,255,255,0.05);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .card-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        margin-bottom: 15px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        padding-bottom: 10px;
+    }
+
+    input, select, button {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #334155;
+        margin-top: 10px;
+        background: #334155;
+        color: white;
+        outline: none;
+        box-sizing: border-box;
+    }
+
+    button {
+        cursor: pointer;
+        background: var(--accent);
+        border: none;
+        font-weight: bold;
+        transition: 0.3s opacity;
+    }
+
+    button:hover { opacity: 0.9; }
+    
+    .btn-danger { background: var(--danger); }
+    .btn-success { background: var(--success); }
+
+    .stats-row {
+        display: flex;
+        justify-content: space-between;
+        background: rgba(255,255,255,0.05);
+        padding: 10px;
+        border-radius: 8px;
+        margin-top: 5px;
+    }
+
+    .small { font-size: 0.85rem; opacity: 0.7; }
+    
+    #log {
+        max-height: 150px;
+        overflow-y: auto;
+        font-size: 0.9rem;
+    }
+
+    .log-item {
+        padding: 8px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .footer-actions {
+        grid-column: 1 / -1;
+        display: flex;
+        gap: 10px;
+    }
+
+    @media (max-width: 600px) {
+        .dashboard-grid { grid-template-columns: 1fr; }
+    }
 </style>
 </head>
 
@@ -30,293 +132,186 @@ button{font-weight:bold;background:#2563eb;color:white}
 
 <h3>🚀 Delivery Intelligence OS</h3>
 
-<div class="card">
-<b>📦 طلبية</b>
-<input id="amt" type="number" placeholder="المبلغ">
-<select id="pay">
-<option value="cash">كاش</option>
-<option value="app">تطبيق</option>
-</select>
-<input id="note" placeholder="ملاحظة">
-<button onclick="addOrder()">تسجيل</button>
-</div>
+<div class="dashboard-grid">
+    <div class="card">
+        <div class="card-title">📦 تسجيل طلبية</div>
+        <input id="amt" type="number" placeholder="المبلغ">
+        <select id="pay">
+            <option value="cash">كاش</option>
+            <option value="app">تطبيق</option>
+        </select>
+        <input id="note" placeholder="ملاحظة (اختياري)">
+        <button onclick="addOrder()">إضافة طلبية</button>
+    </div>
 
-<div class="card">
-<b>⛽ مصروف</b>
-<input id="eAmt" type="number" placeholder="المبلغ">
-<input id="eNote" placeholder="الوصف">
-<button style="background:#dc2626" onclick="addExpense()">تسجيل</button>
-</div>
+    <div class="card">
+        <div class="card-title">⛽ تسجيل مصروف</div>
+        <input id="eAmt" type="number" placeholder="المبلغ">
+        <input id="eNote" placeholder="وصف المصروف (بنزين، طعام...)">
+        <button class="btn-danger" onclick="addExpense()">تسجيل المصروف</button>
+    </div>
 
-<div class="card">
-<b>📍 المسافة</b>
-<p id="km">0 KM</p>
-<p class="small">💰 ربح الكيلومتر: <span id="kmProfit">0</span></p>
-<button onclick="startTrack()">بدء التتبع</button>
-<button onclick="stopTrack()">إيقاف</button>
-</div>
+    <div class="card">
+        <div class="card-title">📍 تتبع المسافة</div>
+        <div class="stats-row">
+            <span>المسافة المقطوعة:</span>
+            <b id="km">0 KM</b>
+        </div>
+        <div class="stats-row">
+            <span>ربح الكيلومتر:</span>
+            <b id="kmProfit" style="color:var(--success)">0</b>
+        </div>
+        <div style="display:flex; gap:5px">
+            <button class="btn-success" onclick="startTrack()">بدء</button>
+            <button class="btn-danger" onclick="stopTrack()">إيقاف</button>
+        </div>
+    </div>
 
-<div class="card">
-<b>🔔 تذكير</b>
-<input id="remTxt" placeholder="النص">
-<input id="remMin" type="number" placeholder="بعد كم دقيقة">
-<button onclick="setReminder()">ضبط</button>
-</div>
+    <div class="card">
+        <div class="card-title">🔔 تذكير ذكي</div>
+        <input id="remTxt" placeholder="ماذا تريد أن نتذكر؟">
+        <input id="remMin" type="number" placeholder="بعد كم دقيقة؟">
+        <button onclick="setReminder()">ضبط التنبيه</button>
+    </div>
 
-<div class="card">
-<b>📊 النتائج</b>
-<p>💰 الصافي: <span id="net">0</span></p>
-<p>👝 الكاش: <span id="cash">0</span></p>
-</div>
+    <div class="card">
+        <div class="card-title">📊 الملخص المالي</div>
+        <div class="stats-row">
+            <span>الربح الصافي:</span>
+            <b id="net">0</b>
+        </div>
+        <div class="stats-row">
+            <span>الكاش المتوفر:</span>
+            <b id="cash" style="color:var(--success)">0</b>
+        </div>
+    </div>
 
-<div class="card">
-<b>📜 السجل</b>
-<div id="log"></div>
-</div>
+    <div class="card">
+        <div class="card-title">📜 آخر العمليات</div>
+        <div id="log"></div>
+    </div>
 
-<button onclick="exportExcel()">📥 Excel</button>
+    <div class="footer-actions">
+        <button style="background:#555" onclick="exportExcel()">📥 تصدير البيانات إلى Excel</button>
+    </div>
+</div>
 
 <script>
-/* ================== STATE ================== */
+/* نفس المنطق البرمجي الخاص بك مع تحسين بسيط في الـ Render */
 const DB="delivery_online";
 let state=JSON.parse(localStorage.getItem(DB))||{
-orders:[],expenses:[],km:0,reminders:[]
+    orders:[],expenses:[],km:0,reminders:[]
 };
 
-/* ================== SAVE ================== */
 const save=()=>localStorage.setItem(DB,JSON.stringify(state));
 
-/* ================== ORDERS ================== */
 function addOrder(){
-let a=+amt.value;if(a<=0)return;
-state.orders.push({a,p:pay.value,n:note.value,t:Date.now()});
-save();calc();
+    let a=+amt.value; if(a<=0) return;
+    state.orders.push({a,p:pay.value,n:note.value||'طلبية',t:Date.now()});
+    amt.value=""; note.value="";
+    save(); calc();
 }
 
-/* ================== EXPENSE ================== */
 function addExpense(){
-let a=+eAmt.value;if(a<=0)return;
-state.expenses.push({a,n:eNote.value,t:Date.now()});
-save();calc();
-}
-
-/* ================== CALC ================== */
-function calc(){
-let rev=0,cash=0,ex=0;
-state.orders.forEach(o=>{rev+=o.a;if(o.p==="cash")cash+=o.a});
-state.expenses.forEach(e=>ex+=e.a);
-net.textContent=(rev*0.5-ex).toFixed(2);
-cash.textContent=(cash-ex).toFixed(2);
-kmProfit.textContent=(state.km>0?(net.textContent/state.km).toFixed(2):0);
-render();
-}
-
-/* ================== LOG ================== */
-function render(){
-log.innerHTML="";
-[...state.orders,...state.expenses]
-.sort((a,b)=>b.t-a.t).slice(0,10)
-.forEach(i=>{
-log.innerHTML+=`<div class="small">${i.a} — ${i.n||''}</div>`;
-});
-}
-
-/* ================== DISTANCE ================== */
-let watchId,lastPos;
-function startTrack(){
-navigator.geolocation.getCurrentPosition(p=>lastPos=p.coords);
-watchId=navigator.geolocation.watchPosition(p=>{
-if(lastPos){
-let d=distance(lastPos.latitude,lastPos.longitude,p.coords.latitude,p.coords.longitude);
-state.km+=d;
-km.textContent=state.km.toFixed(2)+" KM";
-save();
-}
-lastPos=p.coords;
-});
-}
-function stopTrack(){navigator.geolocation.clearWatch(watchId)}
-function distance(lat1,lon1,lat2,lon2){
-const R=6371;
-let dLat=(lat2-lat1)*Math.PI/180;
-let dLon=(lon2-lon1)*Math.PI/180;
-let a=Math.sin(dLat/2)**2+
-Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
-return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-}
-
-/* ================== REMINDER ================== */
-function setReminder(){
-let t=remTxt.value,m=+remMin.value;
-if(!t||m<=0)return;
-state.reminders.push({t,at:Date.now()+m*60000});
-save();
-alert("تم ضبط التذكير");
-}
-setInterval(()=>{
-state.reminders=state.reminders.filter(r=>{
-if(Date.now()>=r.at){
-notify("🔔 تذكير",r.t);
-return false;
-}
-return true;
-});
-save();
-},10000);
-
-/* ================== NOTIFICATION ================== */
-function notify(title,body){
-if(Notification.permission==="granted")
-new Notification(title,{body});
-}
-
-/* ================== EXCEL ================== */
-function exportExcel(){
-let wb=XLSX.utils.book_new();
-XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(state.orders),"Orders");
-XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(state.expenses),"Expenses");
-XLSX.writeFile(wb,"Delivery_Report.xlsx");
-}
-
-/* ================== PWA + SW ================== */
-if('serviceWorker'in navigator){
-const sw=`
-self.addEventListener('install',e=>self.skipWaiting());
-self.addEventListener('fetch',e=>{});
-`;
-navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw])));
-}
-if(Notification.permission!=="granted")Notification.requestPermission();
-
-calc();
-</script>
-
-</body>
-</html></head>
-<body class="dark" id="bodyTag">
-
-<audio id="notifSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
-
-<div class="top-bar">
-    <button class="btn" style="background:var(--w); font-size:12px;" onclick="initAudio()">🔊 تفعيل الصوت</button>
-    <button class="btn" id="themeBtn" style="background:#475569" onclick="toggleTheme()">🌓 ليل/نهار</button>
-</div>
-
-<div class="stats-grid">
-    <div class="stat-box" style="border-color:var(--s)">صافي الربح <span id="net">0</span></div>
-    <div class="stat-box" style="border-color:var(--w)">الكاش بيدك <span id="cash">0</span></div>
-    <div class="stat-box">حق الرئيس <span id="boss">0</span></div>
-    <div class="stat-box" style="border-color:#6366f1">الصيانة <span id="mFund">0</span></div>
-</div>
-
-<hr style="opacity:0.1; margin:15px 0">
-
-<div id="sec-orders">
-    <div class="card">
-        <b>📦 تسجيل طلبية</b>
-        <div class="flex-row">
-            <input id="oAmt" type="number" placeholder="المبلغ" inputmode="decimal">
-            <select id="oPay">
-                <option value="cash">💵 كاش</option>
-                <option value="app">💳 تطبيق</option>
-            </select>
-        </div>
-        <div class="flex-row">
-            <input id="oName" placeholder="اسم الزبون/المحل">
-            <input id="oPhone" type="tel" placeholder="رقم الهاتف (للواتساب)">
-        </div>
-        <div class="flex-row">
-            <button class="btn" style="width:100%" onclick="add('order')">تسجيل وحفظ ✅</button>
-        </div>
-    </div>
-</div>
-
-<div id="sec-expenses" class="hidden">
-    <div class="card">
-        <b>⛽ تسجيل مصروف</b>
-        <div class="flex-row">
-            <input id="eAmt" type="number" placeholder="المبلغ" inputmode="decimal">
-            <input id="eNote" placeholder="بنزين، إصلاح...">
-            <button class="btn" style="background:var(--d)" onclick="add('expense')">حفظ</button>
-        </div>
-    </div>
-</div>
-
-<div id="sec-more" class="hidden">
-    <div class="card">
-        <b>⚙️ الإعدادات (%)</b>
-        <div class="flex-row">
-            <input id="rate" type="number" placeholder="نسبة السائق">
-            <input id="maint" type="number" placeholder="نسبة الصيانة">
-            <button class="btn" onclick="saveSettings()">حفظ</button>
-        </div>
-    </div>
-    <button class="btn" style="width:100%; margin-bottom:10px" onclick="exportExcel()">📥 تصدير إكسل</button>
-    <button class="btn" style="width:100%; background:#475569" onclick="resetDay()">🔄 تصفير اليوم</button>
-</div>
-
-<div class="card">
-    <b>📜 السجل المطور</b>
-    <div id="log"></div>
-</div>
-
-<div class="nav-bar">
-    <div class="nav-item active" onclick="nav('orders', this)">📦<br>الطلبات</div>
-    <div class="nav-item" onclick="nav('expenses', this)">⛽<br>المصاريف</div>
-    <div class="nav-item" onclick="nav('more', this)">⚙️<br>المزيد</div>
-</div>
-
-<script>
-const DB_KEY="delivery_pro_vFinal";
-let state=JSON.parse(localStorage.getItem(DB_KEY))||{ settings:{rate:50,maint:5}, entries:[], reminders:[], theme:'dark' };
-
-function toggleTheme(){
-    state.theme = state.theme === 'dark' ? 'light' : 'dark';
-    applyTheme(); save();
-}
-function applyTheme(){ document.getElementById('bodyTag').className = state.theme; }
-
-// تفعيل الصوت
-function initAudio() { 
-    document.getElementById('notifSound').play().then(() => {
-        alert("تم تفعيل التنبيهات الصوتية");
-    }).catch(() => alert("اضغط تفعيل مرة أخرى"));
-}
-
-function nav(sec, el){
-    ['orders','expenses','more'].forEach(s=> document.getElementById('sec-'+s).classList.add('hidden'));
-    document.getElementById('sec-'+sec).classList.remove('hidden');
-    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-    el.classList.add('active');
-}
-
-function save(){ localStorage.setItem(DB_KEY,JSON.stringify(state)); }
-
-function add(type){
-    let amt = type==='order' ? +oAmt.value : +eAmt.value;
-    if(!amt || amt <=0) return;
-
-    // تشغيل الصوت عند الإضافة
-    document.getElementById('notifSound').play();
-
-    state.entries.push({
-        id: Date.now(), 
-        type, 
-        amt,
-        pay: type==='order' ? oPay.value : null,
-        note: type==='order' ? (oName.value || 'طلب بدون اسم') : (eNote.value || 'مصروف'),
-        phone: type==='order' ? oPhone.value : '',
-        time: new Date().toLocaleTimeString('ar-MA',{hour:'2-digit',minute:'2-digit'})
-    });
-
-    oAmt.value=oName.value=oPhone.value=eAmt.value=eNote.value='';
+    let a=+eAmt.value; if(a<=0) return;
+    state.expenses.push({a,n:eNote.value||'مصروف',t:Date.now()});
+    eAmt.value=""; eNote.value="";
     save(); calc();
 }
 
 function calc(){
-    let rev=0, cashCol=0, ex=0;
-    state.entries.forEach(e=>{
-        if(e.type==="order"){ rev += e.amt; if(e.pay==="cash") cashCol += e.amt; } 
+    let rev=0,cashVal=0,ex=0;
+    state.orders.forEach(o=>{rev+=o.a; if(o.p==="cash") cashVal+=o.a});
+    state.expenses.forEach(e=>ex+=e.a);
+    
+    // معادلة الحساب (المفترض أن الربح 50% من الإيراد - المصاريف)
+    let netVal = (rev * 0.5) - ex;
+    let actualCash = cashVal - ex;
+
+    document.getElementById('net').textContent = netVal.toFixed(2);
+    document.getElementById('cash').textContent = actualCash.toFixed(2);
+    document.getElementById('kmProfit').textContent = (state.km > 0 ? (netVal / state.km).toFixed(2) : 0);
+    render();
+}
+
+function render(){
+    const logEl = document.getElementById('log');
+    logEl.innerHTML="";
+    [...state.orders,...state.expenses]
+    .sort((a,b)=>b.t-a.t).slice(0,8)
+    .forEach(i=>{
+        let type = i.p ? '📦' : '⛽';
+        logEl.innerHTML+=`<div class="log-item"><span>${type} ${i.n}</span> <b>${i.a}</b></div>`;
+    });
+}
+
+/* المسافة والتنبيهات (نفس الكود الخاص بك) */
+let watchId,lastPos;
+function startTrack(){
+    if(!navigator.geolocation) return alert("الموقع غير مدعوم");
+    navigator.geolocation.getCurrentPosition(p=>lastPos=p.coords);
+    watchId=navigator.geolocation.watchPosition(p=>{
+        if(lastPos){
+            let d=distance(lastPos.latitude,lastPos.longitude,p.coords.latitude,p.coords.longitude);
+            state.km+=d;
+            document.getElementById('km').textContent=state.km.toFixed(2)+" KM";
+            save();
+            calc();
+        }
+        lastPos=p.coords;
+    });
+    alert("بدأ تتبع المسافة");
+}
+
+function stopTrack(){
+    navigator.geolocation.clearWatch(watchId);
+    alert("تم إيقاف التتبع");
+}
+
+function distance(lat1,lon1,lat2,lon2){
+    const R=6371;
+    let dLat=(lat2-lat1)*Math.PI/180;
+    let dLon=(lon2-lon1)*Math.PI/180;
+    let a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+    return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function setReminder(){
+    let t=remTxt.value, m=+remMin.value;
+    if(!t||m<=0) return;
+    state.reminders.push({t,at:Date.now()+m*60000});
+    save();
+    remTxt.value=""; remMin.value="";
+    alert("تم ضبط التذكير");
+}
+
+setInterval(()=>{
+    state.reminders=state.reminders.filter(r=>{
+        if(Date.now()>=r.at){
+            if(Notification.permission==="granted") new Notification("🔔 تذكير", {body: r.t});
+            else alert("تذكير: " + r.t);
+            return false;
+        }
+        return true;
+    });
+    save();
+},10000);
+
+function exportExcel(){
+    let wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(state.orders),"Orders");
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(state.expenses),"Expenses");
+    XLSX.writeFile(wb,"Delivery_Report.xlsx");
+}
+
+// Initial Run
+if(Notification.permission!=="granted") Notification.requestPermission();
+calc();
+</script>
+
+</body>
+</html>
+.type==="order"){ rev += e.amt; if(e.pay==="cash") cashCol += e.amt; } 
         else ex += e.amt;
     });
     let myGross = rev * (state.settings.rate/100);
