@@ -1,40 +1,198 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-    <title>Delivery Intelligence PRO</title>
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="manifest" href="manifest.json">
-    
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/311/311084.png">
-    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/311/311084.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Delivery Intelligence OS – ONLINE</title>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Manifest PWA -->
+<link rel="manifest" href="data:application/json,{
+  &quot;name&quot;:&quot;Delivery OS&quot;,
+  &quot;short_name&quot;:&quot;DeliveryOS&quot;,
+  &quot;start_url&quot;:&quot;.&quot;,
+  &quot;display&quot;:&quot;standalone&quot;,
+  &quot;background_color&quot;:&quot;#0f172a&quot;,
+  &quot;theme_color&quot;:&quot;#2563eb&quot;
+}">
 
-    <style>
-        :root{ --p:#2563eb; --bg:#f8fafc; --c:#fff; --t:#1e293b; --s:#10b981; --d:#ef4444; --w:#f59e0b; }
-        body.dark{ --bg:#0f172a; --c:#1e293b; --t:#f1f5f9; }
-        body{font-family:system-ui,sans-serif; background:var(--bg); color:var(--t); margin:0; padding:10px; padding-bottom: 80px; transition: 0.3s; -webkit-tap-highlight-color: transparent;}
-        .card{background:var(--c); border-radius:12px; padding:12px; margin-bottom:10px; box-shadow:0 4px 6px rgba(0,0,0,.1)}
-        .flex-row{display:flex; gap:8px; align-items:center; margin-top:8px}
-        input,select{flex:1; padding:12px; border-radius:8px; border:1px solid #334155; background:var(--bg); color:var(--t); font-size:16px; outline:none}
-        .btn{padding:12px 15px; border:0; border-radius:10px; font-weight:700; cursor:pointer; background:var(--p); color:#fff; white-space:nowrap; transition: 0.2s;}
-        .btn:active{transform: scale(0.95); opacity: 0.8;}
-        .stats-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:8px}
-        .stat-box{background:var(--c); padding:10px; border-radius:10px; text-align:center; border-bottom:3px solid var(--p)}
-        .stat-box span{display:block; font-size:18px; font-weight:800; color:var(--p)}
-        .nav-bar{position:fixed; bottom:0; left:0; right:0; background:var(--c); display:flex; padding:10px; border-top:1px solid #334155; z-index:100}
-        .nav-item{flex:1; text-align:center; font-size:12px; cursor:pointer; opacity:0.6}
-        .nav-item.active{opacity:1; color:var(--p)}
-        .hidden{display:none}
-        .history-item{display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #334155; font-size:14px}
-        .top-bar{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px}
-        .wa-btn{background:#25d366; color:white; padding:4px 8px; border-radius:5px; text-decoration:none; font-size:12px}
-    </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+body{font-family:system-ui;background:#0f172a;color:#f1f5f9;padding:15px}
+.card{background:#1e293b;padding:15px;border-radius:14px;margin-bottom:15px}
+input,select,button{width:100%;padding:12px;border-radius:10px;border:0;margin-top:8px}
+button{font-weight:bold;background:#2563eb;color:white}
+.small{font-size:.85rem;opacity:.8}
+</style>
 </head>
+
+<body>
+
+<h3>🚀 Delivery Intelligence OS</h3>
+
+<div class="card">
+<b>📦 طلبية</b>
+<input id="amt" type="number" placeholder="المبلغ">
+<select id="pay">
+<option value="cash">كاش</option>
+<option value="app">تطبيق</option>
+</select>
+<input id="note" placeholder="ملاحظة">
+<button onclick="addOrder()">تسجيل</button>
+</div>
+
+<div class="card">
+<b>⛽ مصروف</b>
+<input id="eAmt" type="number" placeholder="المبلغ">
+<input id="eNote" placeholder="الوصف">
+<button style="background:#dc2626" onclick="addExpense()">تسجيل</button>
+</div>
+
+<div class="card">
+<b>📍 المسافة</b>
+<p id="km">0 KM</p>
+<p class="small">💰 ربح الكيلومتر: <span id="kmProfit">0</span></p>
+<button onclick="startTrack()">بدء التتبع</button>
+<button onclick="stopTrack()">إيقاف</button>
+</div>
+
+<div class="card">
+<b>🔔 تذكير</b>
+<input id="remTxt" placeholder="النص">
+<input id="remMin" type="number" placeholder="بعد كم دقيقة">
+<button onclick="setReminder()">ضبط</button>
+</div>
+
+<div class="card">
+<b>📊 النتائج</b>
+<p>💰 الصافي: <span id="net">0</span></p>
+<p>👝 الكاش: <span id="cash">0</span></p>
+</div>
+
+<div class="card">
+<b>📜 السجل</b>
+<div id="log"></div>
+</div>
+
+<button onclick="exportExcel()">📥 Excel</button>
+
+<script>
+/* ================== STATE ================== */
+const DB="delivery_online";
+let state=JSON.parse(localStorage.getItem(DB))||{
+orders:[],expenses:[],km:0,reminders:[]
+};
+
+/* ================== SAVE ================== */
+const save=()=>localStorage.setItem(DB,JSON.stringify(state));
+
+/* ================== ORDERS ================== */
+function addOrder(){
+let a=+amt.value;if(a<=0)return;
+state.orders.push({a,p:pay.value,n:note.value,t:Date.now()});
+save();calc();
+}
+
+/* ================== EXPENSE ================== */
+function addExpense(){
+let a=+eAmt.value;if(a<=0)return;
+state.expenses.push({a,n:eNote.value,t:Date.now()});
+save();calc();
+}
+
+/* ================== CALC ================== */
+function calc(){
+let rev=0,cash=0,ex=0;
+state.orders.forEach(o=>{rev+=o.a;if(o.p==="cash")cash+=o.a});
+state.expenses.forEach(e=>ex+=e.a);
+net.textContent=(rev*0.5-ex).toFixed(2);
+cash.textContent=(cash-ex).toFixed(2);
+kmProfit.textContent=(state.km>0?(net.textContent/state.km).toFixed(2):0);
+render();
+}
+
+/* ================== LOG ================== */
+function render(){
+log.innerHTML="";
+[...state.orders,...state.expenses]
+.sort((a,b)=>b.t-a.t).slice(0,10)
+.forEach(i=>{
+log.innerHTML+=`<div class="small">${i.a} — ${i.n||''}</div>`;
+});
+}
+
+/* ================== DISTANCE ================== */
+let watchId,lastPos;
+function startTrack(){
+navigator.geolocation.getCurrentPosition(p=>lastPos=p.coords);
+watchId=navigator.geolocation.watchPosition(p=>{
+if(lastPos){
+let d=distance(lastPos.latitude,lastPos.longitude,p.coords.latitude,p.coords.longitude);
+state.km+=d;
+km.textContent=state.km.toFixed(2)+" KM";
+save();
+}
+lastPos=p.coords;
+});
+}
+function stopTrack(){navigator.geolocation.clearWatch(watchId)}
+function distance(lat1,lon1,lat2,lon2){
+const R=6371;
+let dLat=(lat2-lat1)*Math.PI/180;
+let dLon=(lon2-lon1)*Math.PI/180;
+let a=Math.sin(dLat/2)**2+
+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+/* ================== REMINDER ================== */
+function setReminder(){
+let t=remTxt.value,m=+remMin.value;
+if(!t||m<=0)return;
+state.reminders.push({t,at:Date.now()+m*60000});
+save();
+alert("تم ضبط التذكير");
+}
+setInterval(()=>{
+state.reminders=state.reminders.filter(r=>{
+if(Date.now()>=r.at){
+notify("🔔 تذكير",r.t);
+return false;
+}
+return true;
+});
+save();
+},10000);
+
+/* ================== NOTIFICATION ================== */
+function notify(title,body){
+if(Notification.permission==="granted")
+new Notification(title,{body});
+}
+
+/* ================== EXCEL ================== */
+function exportExcel(){
+let wb=XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(state.orders),"Orders");
+XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(state.expenses),"Expenses");
+XLSX.writeFile(wb,"Delivery_Report.xlsx");
+}
+
+/* ================== PWA + SW ================== */
+if('serviceWorker'in navigator){
+const sw=`
+self.addEventListener('install',e=>self.skipWaiting());
+self.addEventListener('fetch',e=>{});
+`;
+navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw])));
+}
+if(Notification.permission!=="granted")Notification.requestPermission();
+
+calc();
+</script>
+
+</body>
+</html></head>
 <body class="dark" id="bodyTag">
 
 <audio id="notifSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
