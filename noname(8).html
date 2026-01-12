@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Delivery Intelligence PRO</title>
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DeliveryPro">
+
+<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/311/311084.png">
+<link rel="icon" href="https://cdn-icons-png.flaticon.com/512/311/311084.png">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+:root{ --p:#2563eb; --bg:#f8fafc; --c:#fff; --t:#1e293b; --s:#10b981; --d:#ef4444; --w:#f59e0b; }
+body.dark{ --bg:#0f172a; --c:#1e293b; --t:#f1f5f9; }
+body{font-family:system-ui,sans-serif; background:var(--bg); color:var(--t); margin:0; padding:10px; padding-bottom: 80px; transition: 0.3s; -webkit-tap-highlight-color: transparent;}
+.card{background:var(--c); border-radius:12px; padding:12px; margin-bottom:10px; box-shadow:0 4px 6px rgba(0,0,0,.1)}
+
+.flex-row{display:flex; gap:8px; align-items:center; margin-top:8px}
+input,select{flex:1; padding:12px; border-radius:8px; border:1px solid #334155; background:var(--bg); color:var(--t); font-size:16px; outline:none}
+.btn{padding:12px 15px; border:0; border-radius:10px; font-weight:700; cursor:pointer; background:var(--p); color:#fff; white-space:nowrap; transition: 0.2s;}
+.btn:active{transform: scale(0.95); opacity: 0.8;}
+
+.stats-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:8px}
+.stat-box{background:var(--c); padding:10px; border-radius:10px; text-align:center; border-bottom:3px solid var(--p)}
+.stat-box span{display:block; font-size:18px; font-weight:800; color:var(--p)}
+
+.nav-bar{position:fixed; bottom:0; left:0; right:0; background:var(--c); display:flex; padding:10px; border-top:1px solid #334155; z-index:100}
+.nav-item{flex:1; text-align:center; font-size:12px; cursor:pointer; opacity:0.6}
+.nav-item.active{opacity:1; color:var(--p)}
+.hidden{display:none}
+.history-item{display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #334155; font-size:14px}
+.top-bar{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px}
+</style>
+</head>
+<body class="dark" id="bodyTag">
+
+<div class="top-bar">
+    <button class="btn" style="background:var(--w); font-size:12px;" onclick="initAudio()">🔊 تفعيل الصوت</button>
+    <button class="btn" id="themeBtn" style="background:#475569" onclick="toggleTheme()">🌓 ليل/نهار</button>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-box" style="border-color:var(--s)">صافي الربح <span id="net">0</span></div>
+    <div class="stat-box" style="border-color:var(--w)">الكاش بيدك <span id="cash">0</span></div>
+    <div class="stat-box">حق الرئيس <span id="boss">0</span></div>
+    <div class="stat-box" style="border-color:#6366f1">الصيانة <span id="mFund">0</span></div>
+</div>
+
+<hr style="opacity:0.1; margin:15px 0">
+
+<div id="sec-orders">
+    <div class="card">
+        <b>📦 تسجيل طلبية</b>
+        <div class="flex-row">
+            <input id="oAmt" type="number" placeholder="المبلغ" inputmode="decimal">
+            <select id="oPay">
+                <option value="cash">💵 كاش</option>
+                <option value="app">💳 تطبيق</option>
+            </select>
+        </div>
+        <div class="flex-row">
+            <input id="oNote" placeholder="رقم الطلب أو المحل">
+            <button class="btn" onclick="add('order')">تسجيل</button>
+        </div>
+    </div>
+</div>
+
+<div id="sec-expenses" class="hidden">
+    <div class="card">
+        <b>⛽ تسجيل مصروف</b>
+        <div class="flex-row">
+            <input id="eAmt" type="number" placeholder="المبلغ" inputmode="decimal">
+            <input id="eNote" placeholder="بنزين، إصلاح...">
+            <button class="btn" style="background:var(--d)" onclick="add('expense')">حفظ</button>
+        </div>
+    </div>
+</div>
+
+<div id="sec-more" class="hidden">
+    <div class="card">
+        <b>🔔 تذكير ذكي</b>
+        <div class="flex-row">
+            <input id="rText" placeholder="النص">
+            <input id="rMin" type="number" style="max-width:80px" placeholder="دقيقة">
+            <button class="btn" style="background:var(--w)" onclick="addReminder()">ضبط</button>
+        </div>
+        <button class="btn" style="width:100%; margin-top:10px; background:var(--p)" onclick="playBeep()">📢 تجربة المنبه</button>
+    </div>
+    <div class="card">
+        <b>⚙️ الإعدادات (%)</b>
+        <div class="flex-row">
+            <input id="rate" type="number" placeholder="نسبة السائق">
+            <input id="maint" type="number" placeholder="نسبة الصيانة">
+            <button class="btn" onclick="saveSettings()">حفظ</button>
+        </div>
+    </div>
+    <button class="btn" style="width:100%; margin-bottom:10px" onclick="exportExcel()">📥 تصدير إكسل</button>
+    <button class="btn" style="width:100%; background:#475569" onclick="resetDay()">🔄 تصفير اليوم</button>
+</div>
+
+<div class="card">
+    <b>📜 السجل</b>
+    <div id="log"></div>
+</div>
+
+<div class="nav-bar">
+    <div class="nav-item active" onclick="nav('orders', this)">📦<br>الطلبات</div>
+    <div class="nav-item" onclick="nav('expenses', this)">⛽<br>المصاريف</div>
+    <div class="nav-item" onclick="nav('more', this)">⚙️<br>المزيد</div>
+</div>
+
+<script>
+const DB_KEY="delivery_pro_vFinal";
+let audioCtx = null;
+let state=JSON.parse(localStorage.getItem(DB_KEY))||{ settings:{rate:50,maint:5}, entries:[], reminders:[], theme:'dark' };
+
+function toggleTheme(){
+    state.theme = state.theme === 'dark' ? 'light' : 'dark';
+    applyTheme(); save();
+}
+function applyTheme(){ document.getElementById('bodyTag').className = state.theme; }
+function initAudio() { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); alert("نظام الصوت جاهز"); }
+
+function nav(sec, el){
+    ['orders','expenses','more'].forEach(s=> document.getElementById('sec-'+s).classList.add('hidden'));
+    document.getElementById('sec-'+sec).classList.remove('hidden');
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    el.classList.add('active');
+}
+
+function save(){ localStorage.setItem(DB_KEY,JSON.stringify(state)); }
+
+function add(type){
+    let amt = type==='order' ? +oAmt.value : +eAmt.value;
+    if(!amt || amt <=0) return;
+    state.entries.push({
+        id: Date.now(), type, amt,
+        pay: type==='order' ? oPay.value : null,
+        note: (type==='order' ? oNote.value : eNote.value) || (type==='order' ? 'طلب' : 'مصروف'),
+        time: new Date().toLocaleTimeString('ar-MA',{hour:'2-digit',minute:'2-digit'})
+    });
+    oAmt.value=oNote.value=eAmt.value=eNote.value='';
+    save(); calc();
+}
+
+function calc(){
+    let rev=0, cashCol=0, ex=0;
+    state.entries.forEach(e=>{
+        if(e.type==="order"){ rev += e.amt; if(e.pay==="cash") cashCol += e.amt; } 
+        else ex += e.amt;
+    });
+    let myGross = rev * (state.settings.rate/100);
+    let maintFee = myGross * (state.settings.maint/100);
+    let myNet = myGross - ex - maintFee;
+    let bossDue = (rev - myGross) - (rev - cashCol);
+
+    document.getElementById('net').textContent = myNet.toFixed(2);
+    document.getElementById('cash').textContent = (cashCol - ex).toFixed(2);
+    document.getElementById('boss').textContent = bossDue.toFixed(2);
+    document.getElementById('mFund').textContent = maintFee.toFixed(2);
+    render();
+}
+
+function render(){
+    const log = document.getElementById('log'); log.innerHTML="";
+    state.entries.slice(-15).reverse().forEach(e=>{
+        log.innerHTML += `<div class="history-item"><span>${e.type==='order'?'📦':'⛽'} ${e.note}</span><span style="font-weight:bold; color:${e.type==='order'?'var(--s)':'var(--d)'}">${e.amt}</span></div>`;
+    });
+}
+
+function playBeep() {
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 500]);
+    for (let i = 0; i < 6; i++) {
+        setTimeout(() => {
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(900, audioCtx.currentTime);
+            gain.gain.setValueAtTime(1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.9);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.9);
+        }, i * 800);
+    }
+}
+
+function addReminder(){
+    let t=rText.value, m=+rMin.value;
+    if(!t || m<=0) return;
+    state.reminders.push({t, at: Date.now() + m*60000});
+    save(); alert("سأذكرك بـ: " + t);
+}
+
+function saveSettings(){
+    state.settings.rate = +document.getElementById('rate').value || 50;
+    state.settings.maint = +document.getElementById('maint').value || 5;
+    save(); calc(); alert("تم الحفظ");
+}
+
+setInterval(()=>{
+    let changed = false;
+    state.reminders = state.reminders.filter(r=>{
+        if(Date.now() >= r.at){ playBeep(); alert("🔔 " + r.t); changed = true; return false; }
+        return true;
+    });
+    if(changed) save();
+}, 5000);
+
+function resetDay(){ if(confirm("مسح الكل؟")){ state.entries=[]; save(); calc(); } }
+function exportExcel(){ 
+    let ws = XLSX.utils.json_to_sheet(state.entries);
+    let wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Report");
+    XLSX.writeFile(wb, "MyDeliveryReport.xlsx");
+}
+
+document.getElementById('rate').value = state.settings.rate;
+document.getElementById('maint').value = state.settings.maint;
+applyTheme();
+calc();
+</script>
+</body>
+</html>
